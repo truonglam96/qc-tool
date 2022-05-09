@@ -1,0 +1,46 @@
+{
+  "name": "raspberry_testing_machine",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node app.js",
+    "start:pm2": "pm2 start app.js --name 'server' -- start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://chauvoluuhuong@bitbucket.org/chauvoluuhuong/raspberry_testing_machine.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "homepage": "https://bitbucket.org/chauvoluuhuong/raspberry_testing_machine#readme",
+  "dependencies": {
+    "@types/node": "^12.0.3",
+    "await-spawn": "^2.1.2",
+    "axios": "^0.26.0",
+    "body-parser": "^1.18.3",
+    "concurrently": "^4.1.0",
+    "crc-32": "^1.2.0",
+    "csv-parser": "^2.3.1",
+    "csvtojson": "^2.0.10",
+    "date-and-time": "^0.7.0",
+    "delay": "^4.1.0",
+    "dotenv": "^8.0.0",
+    "ejs": "^2.6.1",
+    "express": "^4.17.2",
+    "ip": "^1.1.5",
+    "mongoose": "^5.4.1",
+    "node-watch": "^0.6.0",
+    "nodejs-base64": "^1.0.3",
+    "nodemon": "^1.18.11",
+    "onoff": "^3.2.2",
+    "path": "^0.12.7",
+    "saslprep": "^1.0.3",
+    "serialport": "^8.0.5",
+    "socket.io": "^2.2.0"
+  },
+  "devDependencies": {
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.2.3"
+  }
+}
