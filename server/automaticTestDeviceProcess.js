@@ -4,11 +4,12 @@ const { listFolder, consoleToLogger, uuidv4 } = require("./utility");
 const { automaticTestingResult, manualTestingResult } = require("./models");
 const axios = require("axios");
 const esp = require("./esp").esp;
-const { certificateInfos } = require('./models')
+const { certificateInfos } = require("./models");
 
 // const {TESTING_MODES,  TESTING_STATUS} = require('./FactoryAutomaticTestProcess')
 const conf = require("../config");
 const delay = require("delay");
+const { log } = require("console");
 
 var WAS_ERROR = false;
 
@@ -349,67 +350,104 @@ process.on("message", async (sms) => {
       });
       let port = sms.data.device.serialPort;
 
-      // let certificateInfo = await axios.get(
-      //   `${conf.qcServerEndpoind}/api/getCertificateInfoHaveNotUsedYet`
-      // );
-
-      // let _certificateInfo = await certificateInfos
-      //   .count({
-      //     certificateFileName: "SBO02_2022_Mar_Production_10300_3500_4000.csv",
-      //     isAllocated: false,
-      //   })
-      //   .exec();  
-
       let HPI = await esp.readHPI(sms.data.device.serialPort);
-      // telegram.sendMessageToChannel(`Running testing on port: ` + port)
-      propertiesTestingProcessTracked.device.HPI = HPI;
-      if (!HPI) {
-        // if not efuse, query serial info and burn it
-        let certificateInfo = await axios.get(
-          `${conf.qcServerEndpoind}/api/getCertificateInfoHaveNotUsedYet`
-        );
-
-        console.log("certificateInfo.status: ", certificateInfo.status);
-        if (certificateInfo.status !== 200) {
-          telegram.sendMessageToChannel(
-            `Can't get certificate file, status code: ` + certificateInfo.status
-          );
-          theBoot.sendSerial("led 3");
-          sms.data.device.serialPort = "";
-          throw Error(
-            `Can't Get Certificate File, STOP opener process on port ` + port
-          );
+      //X27KRR, M4KPAD, FDE77U
+      if (HPI) {
+        //*******************************************************/
+        try {
+          let _serial = HPI.split("_A")[1];
+          let _check = await certificateInfos
+            .count({
+              serial: _serial,
+              isAllocated: true,
+            })
+            .exec();
+          if (_check === 0) {
+            let dataJson = require("./4001_5000.json");
+            let _privateKey = dataJson.filter((fil) => fil.Serial == _serial)[0]
+              .PrivateKey;
+            let _PEM = dataJson.filter((fil) => fil.Serial == _serial)[0].PEM;
+            //add certificateInfos
+            await certificateInfos
+              .create({
+                dateCreated: 1654844400000,
+                certificateFileName:
+                  "SBO02_2022_Mar_Production_10300_4001_5000.csv",
+                serial: _serial,
+                privateKey: _privateKey,
+                PEM: _PEM,
+                macAddress: "",
+                isAllocated: true,
+                date: "2022-06-10T07:00:00.000Z",
+                __v: 0,
+              })
+              .then(async function () {
+                telegram.sendMessageToChannel(
+                  `Imported certificate key to certificateInfo, Serial: ` +
+                    _serial
+                );
+                console.log("OK OK OK OK OK OK OK OK OK OK");
+              });
+          }
+        } catch (error) {
+          console.log("LAMNTTTTTTTTTTTTTTTT: ", error);
         }
-        certificateInfo = certificateInfo.data;
-        let efuseConfigWithSerialNumber = sms.data.efuseConfig;
-        efuseConfigWithSerialNumber.productionLine += certificateInfo.serial;
-
-        await theBoot.checkAndBurnEfuse(
-          sms.data.device.serialPort,
-          efuseConfigWithSerialNumber
-        );
-        propertiesTestingProcessTracked.device.testingStatus =
-          TESTING_STATUS.IN_TESTING;
-
-        ParentProcessbroadcaster.pushNotification({
-          title: "Box Running Status",
-          message: "Burn Efuse Done",
-          type: "success",
-          duration: 5000,
-        });
-
-        await delay(5000);
-
-        HPI = await esp.readHPI(sms.data.device.serialPort);
-        propertiesTestingProcessTracked.device.HPI = HPI;
+        //*******************************************************/
       } else {
-        ParentProcessbroadcaster.pushNotification({
-          title: "Box Running Status",
-          message: `Device Already have HPI: ${HPI}`,
-          type: "success",
-          duration: 15000,
-        });
+        propertiesTestingProcessTracked.device.testingStatus =
+        TESTING_STATUS.DEVICE_BROKEN;
+        throw Error("Can't get HPI");
       }
+
+      // telegram.sendMessageToChannel(`Running testing on port: ` + port)
+      // propertiesTestingProcessTracked.device.HPI = HPI;
+      // if (!HPI) {
+      //   // if not efuse, query serial info and burn it
+      //   let certificateInfo = await axios.get(
+      //     `${conf.qcServerEndpoind}/api/getCertificateInfoHaveNotUsedYet`
+      //   );
+
+      //   console.log("certificateInfo.status: ", certificateInfo.status);
+      //   if (certificateInfo.status !== 200) {
+      //     telegram.sendMessageToChannel(
+      //       `Can't get certificate file, status code: ` + certificateInfo.status
+      //     );
+      //     theBoot.sendSerial("led 3");
+      //     sms.data.device.serialPort = "";
+      //     throw Error(
+      //       `Can't Get Certificate File, STOP opener process on port ` + port
+      //     );
+      //   }
+      //   certificateInfo = certificateInfo.data;
+      //   let efuseConfigWithSerialNumber = sms.data.efuseConfig;
+      //   efuseConfigWithSerialNumber.productionLine += certificateInfo.serial;
+
+      //   await theBoot.checkAndBurnEfuse(
+      //     sms.data.device.serialPort,
+      //     efuseConfigWithSerialNumber
+      //   );
+      //   propertiesTestingProcessTracked.device.testingStatus =
+      //     TESTING_STATUS.IN_TESTING;
+
+      //   ParentProcessbroadcaster.pushNotification({
+      //     title: "Box Running Status",
+      //     message: "Burn Efuse Done",
+      //     type: "success",
+      //     duration: 5000,
+      //   });
+
+      //   await delay(5000);
+
+      //   HPI = await esp.readHPI(sms.data.device.serialPort);
+      //   propertiesTestingProcessTracked.device.HPI = HPI;
+      // } else {
+      //   ParentProcessbroadcaster.pushNotification({
+      //     title: "Box Running Status",
+      //     message: `Device Already have HPI: ${HPI}`,
+      //     type: "success",
+      //     duration: 15000,
+      //   });
+      // }
     } catch (error) {
       console.log("read info device got error: ", error);
       ParentProcessbroadcaster.pushNotification({

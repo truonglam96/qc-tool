@@ -2,7 +2,7 @@ var axios = require("axios");
 
 module.exports = {
   telegram: {
-    sendMessageToChannel: function (text) {
+    sendMessageToChannel: async function (text) {
       var data = JSON.stringify({
         text: text,
         chat_id: "@factorymachine_error",
