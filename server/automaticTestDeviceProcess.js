@@ -349,16 +349,16 @@ process.on("message", async (sms) => {
       });
       let port = sms.data.device.serialPort;
 
-      let certificateInfo = await axios.get(
-        `${conf.qcServerEndpoind}/api/getCertificateInfoHaveNotUsedYet`
-      );
+      // let certificateInfo = await axios.get(
+      //   `${conf.qcServerEndpoind}/api/getCertificateInfoHaveNotUsedYet`
+      // );
 
-      let _certificateInfo = await certificateInfos
-        .count({
-          certificateFileName: "SBO02_2022_Mar_Production_10300_3500_4000.csv",
-          isAllocated: false,
-        })
-        .exec();  
+      // let _certificateInfo = await certificateInfos
+      //   .count({
+      //     certificateFileName: "SBO02_2022_Mar_Production_10300_3500_4000.csv",
+      //     isAllocated: false,
+      //   })
+      //   .exec();  
 
       let HPI = await esp.readHPI(sms.data.device.serialPort);
       // telegram.sendMessageToChannel(`Running testing on port: ` + port)

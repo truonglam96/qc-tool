@@ -7,8 +7,8 @@ var config = {
    pythonPath: null,
    mongoDB_URL: null,
    provisioningFile: path.join(__dirname, 'server/provisioningFile') ,
-   qcServerEndpoind: 'http://34.142.176.250:8080',
-   qctoolServerSocketUrl: 'http://34.142.176.250:8080/QctoolSocket',
+   qcServerEndpoind: 'http://34.174.19.10:8080',
+   qctoolServerSocketUrl: 'http://34.174.19.10:8080/QctoolSocket',
    CA_ROOT_KEY: null,
    printingLabelCommandFile: './print_label_26_2_2022/command_print_26_2_2022.sh',
    //production https://api.wecheer.me/device-management/api/Firmware/default-firmware-url
@@ -20,14 +20,16 @@ var config = {
 config.environment = process.argv[2]
 
 if (config.environment === 'production') {
+    //34.174.19.10:27017
     // config.mongoDB_URL = 'mongodb+srv://QCTool:Livetoride01@cluster0.xqdd5.mongodb.net/qc?retryWrites=true&w=majority'
-    config.mongoDB_URL = 'mongodb://qc-server:qc-server%40123@34.142.176.250:27017/qc?directConnection=true&serverSelectionTimeoutMS=2000&authMechanism=DEFAULT&retryWrites=True'
+    // config.mongoDB_URL = 'mongodb://qc-server:qc-server%40123@34.142.176.250:27017/qc?directConnection=true&serverSelectionTimeoutMS=2000&authMechanism=DEFAULT&retryWrites=True'
+    config.mongoDB_URL = 'mongodb://qc-server:qc-server%40123@34.174.19.10:27017/qc?directConnection=true&serverSelectionTimeoutMS=2000&authMechanism=DEFAULT&retryWrites=True'
     config.serverSelectionTimeoutMS = 5000
 } else {
     // config.qcServerEndpoind = 'http://210.245.120.122:8080'
     // config.qctoolServerSocketUrl = 'http://210.245.120.122:8080/QctoolSocket'
     // config.mongoDB_URL = 'mongodb+srv://QCTool:Livetoride01@cluster0.xqdd5.mongodb.net/qc?retryWrites=true&w=majority'
-    config.mongoDB_URL = 'mongodb://qc-server:qc-server%40123@34.142.176.250:27017/qc?directConnection=true&serverSelectionTimeoutMS=2000&authMechanism=DEFAULT&retryWrites=True'
+    config.mongoDB_URL = 'mongodb://qc-server:qc-server%40123@34.174.19.10:27017/qc?directConnection=true&serverSelectionTimeoutMS=2000&authMechanism=DEFAULT&retryWrites=True'
     config.serverSelectionTimeoutMS = 5000
 }
 //find python3
