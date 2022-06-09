@@ -1,9 +1,10 @@
 const { theBoot } = require("./boot");
-const { telegram } = require("./telegram_service")
+const { telegram } = require("./telegram_service");
 const { listFolder, consoleToLogger, uuidv4 } = require("./utility");
 const { automaticTestingResult, manualTestingResult } = require("./models");
 const axios = require("axios");
 const esp = require("./esp").esp;
+const { certificateInfos } = require('./models')
 
 // const {TESTING_MODES,  TESTING_STATUS} = require('./FactoryAutomaticTestProcess')
 const conf = require("../config");
@@ -347,6 +348,18 @@ process.on("message", async (sms) => {
         duration: 5000,
       });
       let port = sms.data.device.serialPort;
+
+      let certificateInfo = await axios.get(
+        `${conf.qcServerEndpoind}/api/getCertificateInfoHaveNotUsedYet`
+      );
+
+      let _certificateInfo = await certificateInfos
+        .count({
+          certificateFileName: "SBO02_2022_Mar_Production_10300_3500_4000.csv",
+          isAllocated: false,
+        })
+        .exec();  
+
       let HPI = await esp.readHPI(sms.data.device.serialPort);
       // telegram.sendMessageToChannel(`Running testing on port: ` + port)
       propertiesTestingProcessTracked.device.HPI = HPI;
@@ -358,7 +371,9 @@ process.on("message", async (sms) => {
 
         console.log("certificateInfo.status: ", certificateInfo.status);
         if (certificateInfo.status !== 200) {
-          telegram.sendMessageToChannel(`Can't get certificate file, status code: ` + certificateInfo.status)
+          telegram.sendMessageToChannel(
+            `Can't get certificate file, status code: ` + certificateInfo.status
+          );
           theBoot.sendSerial("led 3");
           sms.data.device.serialPort = "";
           throw Error(
