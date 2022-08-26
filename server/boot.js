@@ -137,6 +137,27 @@ module.exports = {
 
         lastTestingResult: null,
 
+        // const serialPort = require('serialport')
+
+        // searchFscPort();
+
+        searchFscPort: async function () {
+            SerialPort.list().then(ports => {
+                for(let i = 0; i < ports.length; i++) {
+                    if(ports[i].manufacturer == 'FTDI' || ports[i].manufacturer == 'ME') {
+                        console.log('Path: ', ports[i].path);
+                        console.log('Manufacturer: ', ports[i].manufacturer);
+                        console.log('SN: ', ports[i].serialNumber);
+                        console.log('lID: ', ports[i].locationId);
+                        console.log('pID: ', ports[i].productId);
+                        console.log('vID: ', ports[i].vendorId);
+                        console.log('pnpID: ', ports[i].pnpId);
+                        return;
+                    }
+                }
+            });
+        },
+
         listSerialPorts: async function() {
             let gotSerialPortInfos = []
             let gotSerialPorts = []
@@ -144,6 +165,7 @@ module.exports = {
                 gotSerialPortInfos = await SerialPort.list() // on macbook, this method use with cp2012 cause bocking here 
                 // console.log("gotSerialPortInfos: ", gotSerialPortInfos)
                 gotSerialPorts = gotSerialPortInfos.map(wholeSerialPortInfo => (wholeSerialPortInfo.path))
+                // console.log("gotSerialPorts: ", gotSerialPorts)
             } else {
                 gotSerialPortInfos = fs.readdirSync('/dev/')
                 gotSerialPorts = gotSerialPortInfos.filter((pathSerial)=>{
@@ -187,7 +209,7 @@ module.exports = {
             while (true) {
                 // find newport
                 this.serialPorts = await this.listSerialPorts()
-                
+
                 while (true) {
                     await delay(100)
                     let currentSerialPorts = await this.listSerialPorts()

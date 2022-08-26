@@ -3,7 +3,7 @@ const fs = require('fs')
 
 var config = {
    environment: null,
-   os: "macOS",
+   os: "win11",
    pythonPath: null,
    mongoDB_URL: null,
    provisioningFile: path.join(__dirname, 'server/provisioningFile') ,

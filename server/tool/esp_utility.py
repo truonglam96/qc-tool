@@ -30,7 +30,7 @@ PYTHON = 'python3'
 
 print("PYTHON: {}".format(PYTHON))
 
-def burn_efuse(usb_port = default_usb_port,iso_day = None,model='SBO2',version_code='2a2b1518',production_line='16'):
+def burn_efuse(usb_port = default_usb_port,iso_day = None,model='SBO2',version_code='3e3f2233',production_line='A'):
     r = None
     today = datetime.date.today()
     
@@ -44,7 +44,7 @@ def burn_efuse(usb_port = default_usb_port,iso_day = None,model='SBO2',version_c
     My format will remove prdn_date and burn on fuse like that: 2018-04-17:SBO2_2a2b1518_16 
     This will make more sense to me when i split string and show in my QC-Tool 
     '''
-    prdn_format="{}:{}_{}_{}"    
+    prdn_format="{}_{}_{}_{}"    
     prdn=prdn_format.format(iso_day, model,version_code,production_line)
 
     usbPortFileName = usb_port.replace('/','_')
@@ -55,7 +55,10 @@ def burn_efuse(usb_port = default_usb_port,iso_day = None,model='SBO2',version_c
         os.remove(fileToWriteEfuseData)
 
     with open(fileToWriteEfuseData, 'wb') as keyfile:
+       
         keyfile.write(prdn.ljust(32,'\0').encode('utf-8'))
+       
+        # keyfile.write(prdn.ljust(32,'\0').encode('utf-8'))
         print("iso_day = {} model ={} production_number = {} production_line = {}".format(iso_day,model,version_code,production_line))
         '''
         remove --force-write-always option here because if we write new value on fuse, the result will be bitwise OR of new and old values.
@@ -68,10 +71,11 @@ def burn_efuse(usb_port = default_usb_port,iso_day = None,model='SBO2',version_c
         # check_call("{} tool/espefuse.py --port {} --do-not-confirm set_flash_voltage 1.8V".format(PYTHON,usb_port).split(" "))
         # print("{} tool/espefuse.py --port /dev/ttyUSB0 --do-not-confirm set_flash_voltage 1.8V".format(PYTHON))
 
-        r = check_call([PYTHON, "tool/espefuse.py","--port",usb_port, "--do-not-confirm","burn_key","BLK3", fileToWriteEfuseData,"--no-protect-key"])
+        # r = check_call([PYTHON, "D:/Github/qc-tool/server/tool/espefuse.py","--port",usb_port,"--do-not-confirm", "burn_key","BLK3", fileToWriteEfuseData,"--force-write-always"])
+        r = check_call([PYTHON, "D:/Github/qc-tool/server/tool/espefuse.py","--port",usb_port, "--do-not-confirm","burn_key","BLK3", "D:/Github/qc-tool/"+fileToWriteEfuseData,"--no-protect-key"])
         print("burn production efuse at file: {}".format(fileToWriteEfuseData))
         # forece burn
-        # r = check_call([PYTHON, "tool/espefuse.py","--port",usb_port, "--do-not-confirm","burn_key","BLK3",'tmp_prdn.bin',"--no-protect-key", "--force-write-always"])
+        # r = check_call([PYTHON, "D:/Github/qc-tool/server/tool/espefuse.py","--port",usb_port, "--do-not-confirm","burn_key","BLK3",'D:/Github/qc-tool/server/tool/tmp_prdn1.bin',"--no-protect-key", "--force-write-always"])
     
         print("burned info device to efuse")
         os.remove(fileToWriteEfuseData)
@@ -123,7 +127,7 @@ def burn_efuse_wrover(data, usbPort):
 	    keyfile.truncate()
 
     try:
-        check_call(["python", "tool/espefuse.py", "--port", usbPort, "--do-not-confirm", "burn_block_data", "--offset", "0", "BLK3", 'tmp_prdn.bin'])
+        check_call(["python", "D:/Github/qc-tool/server/tool/espefuse.py", "--port", usbPort, "--do-not-confirm", "burn_block_data", "--offset", "0", "BLK3", 'D:/Github/qc-tool/server/tool/tmp_prdn.bin'])
     except Exception as e:
         return str(e)
     
@@ -172,8 +176,16 @@ def read_efuse(usb_port, block_number ='EFUSE block 3:'):
             if emptyEfuse:
                 print("Empty Efuse")
                 return
+                
+            # data = str(binascii.a2b_hex(data).decode('ASCII'))
+
+            try:
+                data = data.decode('ASCII')
+                data = str(binascii.a2b_hex(data))
+            except Exception as e:
+                print(e)
+                raise Exception("decode error")
             
-            data = str(binascii.a2b_hex(data).decode('ASCII'))
 
             print("efuse in device: {}".format(data))      
             # check whether fuse has been writen ?                                    
@@ -183,7 +195,7 @@ def read_efuse(usb_port, block_number ='EFUSE block 3:'):
 
 def erase_firmware(port):
     r = ''
-    commandCall = '{} tool/esptool.py --port {} erase_flash'.format(PYTHON, port)
+    commandCall = '{} D:/Github/qc-tool/server/tool/esptool.py --port {} erase_flash'.format(PYTHON, port)
     commandCall = commandCall.split(' ')
     
     try:
@@ -194,9 +206,9 @@ def erase_firmware(port):
     return r.decode("utf-8")
 
 
-def read_mac_esp32(usb_port = '/dev/ttyUSB0'):
+def read_mac_esp32(usb_port = 'COM3'):
     try:
-        command = '{} tool/esptool.py -p {} -b 115200 --before default_reset --after hard_reset read_mac'.format(PYTHON, usb_port)
+        command = '{} D:/Github/qc-tool/server/tool/esptool.py -p {} -b 115200 --before default_reset --after hard_reset read_mac'.format(PYTHON, usb_port)
         r = check_output(command.split(" ")).decode("ASCII")
         print("read mac output: {}".format(r))
         
@@ -210,8 +222,8 @@ def read_mac_esp32(usb_port = '/dev/ttyUSB0'):
     return mac
 # swap functions above to process 
 
-def detect_type_esp32(usb_port = '/dev/ttyUSB0'):
-    cmd = "{} tool/esptool.py -p {} -b 115200 flash_id".format(PYTHON, usb_port)
+def detect_type_esp32(usb_port = 'COM3'):
+    cmd = "{} D:/Github/qc-tool/server/tool/esptool.py -p {} -b 115200 flash_id".format(PYTHON, usb_port)
     cmd = cmd.split(" ")
     try:
         r = check_output(cmd).decode("utf-8")
@@ -230,7 +242,7 @@ def detect_type_esp32(usb_port = '/dev/ttyUSB0'):
  if there is 1 value at this string  BLK3_PART_RESERVE      BLOCK3 partially served for ADC calibration data  = 0 R/W (0x0) => epressif use BLK3 for calirate ADC => remove
 2. the string on BLK3 should be hikami format or 0
 '''
-def is_error_chip(usbPort='/dev/ttyUSB0'):
+def is_error_chip(usbPort='COM3'):
     EMPTY_EFUSE = False
     STRANGE_FORMAT_STRING_ERROR = "Strange Format String\n(Efuse Lỗi Vui Lòng Xếp Loại Fail)"
     READ_EFUSE_ERROR = "Read Efuse Error"
@@ -239,7 +251,7 @@ def is_error_chip(usbPort='/dev/ttyUSB0'):
     BLK3_STR = ''
 
     try:
-        a = execute_command("{} tool/espefuse.py --port {} summary".format(PYTHON, usbPort))
+        a = execute_command("{} D:/Github/qc-tool/server/tool/espefuse.py --port {} summary".format(PYTHON, usbPort))
     except Exception as e:
         return "","","",CAN_NOT_READ_EFUSE
     # find blk3 
@@ -284,7 +296,8 @@ def check_and_burn_efuse(port, iso_day = None, model=None, version_code=None, pr
     
     print('>>>>>>>>>>>>>>>>burn efuse:')
     # burn_efuse(usb_port=port,iso_day = iso_day, model=model, version_code=version_code, production_line=production_line)
-    if (EMPTY_EFUSE and not STRANGE_FORMAT_STRING_ERROR):
+    # if (EMPTY_EFUSE and not STRANGE_FORMAT_STRING_ERROR):
+    if (1==1):
         print('>>>>>>>>>>>>>>>>burn efuse:')
         print('iso_day: {} model: {}, version_code: {}, production_line: {}'.format(iso_day, model, version_code, production_line))
         burn_efuse(usb_port=port,iso_day = iso_day, model=model, version_code=version_code, production_line=production_line)
@@ -293,7 +306,7 @@ def check_and_burn_efuse(port, iso_day = None, model=None, version_code=None, pr
         return
 
     print('>>>>>>>>>>>>>>>>>>>>>port: {}'.format(port))
-    cmd = '{} tool/esptool.py --chip auto --port {} --after hard_reset run'.format(PYTHON, port)
+    cmd = '{} D:/Github/qc-tool/server/tool/esptool.py --chip auto --port {} --after hard_reset run'.format(PYTHON, port)
     r = check_call(cmd.split(' '))
     print("excuted cmd: ", cmd)
     return
@@ -302,8 +315,8 @@ if __name__ == '__main__':
     # print("detect: {}".format(detect_type_esp32()))
     # burn_efuse_wrover(  data={"model":"SBO2", "version_code":"2e3a1849","production_line":'A'}, \
     #                     usbPort='/dev/tty.SLAB_USBtoUART')
-    read_efuse('/dev/tty.SLAB_USBtoUART')
-    # check_and_burn_efuse(port="/dev/tty.SLAB_USBtoUART", model='SBO2', version_code='3b3c1926', production_line='A')
-    # burn_efuse(usb_port='/dev/tty.usbserial-DO00FV4Y',version_code='2a2b1518',production_line='16',model='SBO2')
+    read_efuse('COM5')
+    check_and_burn_efuse(port="COM3", model='SBO2', version_code='3b3c1926', production_line='A')
+    burn_efuse(usb_port='COM3',version_code='3e3f2233',production_line='A',model='SBO2')
     # print(read_efuse(usb_port='/dev/ttyUSB0',block_number='BLK3\n') == True)
     # is_error_chip(usbPort='/dev/tty.SLAB_USBtoUART')
